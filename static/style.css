@@ -1,0 +1,383 @@
+:root {
+  --sky-top: #24344a;
+  --sky-bottom: #10151d;
+  --dirt: #5b3d24;
+  --dirt-dark: #3a2716;
+  --wood: #7a5230;
+  --wood-dark: #4a3218;
+  --wood-light: #a9784a;
+  --panel: #241d15e6;
+  --panel-alt: #1a140dcc;
+  --border-light: #8a6a3f;
+  --border-dark: #100c07;
+  --slot-bg: #14100b;
+  --slot-light: #5c4a30;
+  --slot-dark: #000000;
+  --text: #f1e6cf;
+  --text-dim2: #b6a887;
+  --grass: #7fbf3f;
+  --grass-dark: #4f8a24;
+  --mana: #5bb0e8;
+  --health: #e5473f;
+  --gold: #ffd24a;
+  --wood-font: 'Press Start 2P', 'Verdana', sans-serif;
+  --body-font: 'Verdana', 'Segoe UI', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+body {
+  font-family: var(--body-font);
+  color: var(--text);
+  background:
+    linear-gradient(var(--sky-top), var(--sky-bottom) 38%, var(--dirt) 38%, var(--dirt-dark) 100%);
+  background-attachment: fixed;
+  position: relative;
+}
+
+/* subtle "cave stone" speckle texture over the dirt area */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(rgba(0,0,0,0.25) 1px, transparent 1px),
+    radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 26px 26px, 18px 18px;
+  background-position: 0 0, 9px 9px;
+  opacity: 0.5;
+  z-index: 0;
+}
+
+.site-header, main, footer {
+  position: relative;
+  z-index: 1;
+}
+
+.site-header {
+  text-align: center;
+  padding: 2.2rem 1rem 1.6rem;
+}
+
+.site-header h1 {
+  margin: 0 0 0.9rem;
+  font-family: var(--wood-font);
+  font-size: 1.35rem;
+  line-height: 1.6;
+  letter-spacing: 1px;
+  color: var(--gold);
+  text-shadow:
+    2px 2px 0 #6b3f10,
+    -1px -1px 0 #3a220a,
+    3px 3px 6px rgba(0,0,0,0.6);
+}
+
+.subtitle {
+  color: var(--text-dim2);
+  margin: 0 auto;
+  max-width: 520px;
+  font-size: 0.9rem;
+}
+
+main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+/* ---------- search ---------- */
+
+.search-wrap {
+  position: relative;
+  margin-bottom: 2rem;
+}
+
+#search-input {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  font-size: 1rem;
+  font-family: var(--body-font);
+  border-radius: 4px;
+  border: 3px solid var(--border-dark);
+  background: var(--slot-bg);
+  color: var(--text);
+  outline: none;
+  box-shadow:
+    inset 0 0 0 2px var(--slot-light),
+    inset 0 2px 6px rgba(0,0,0,0.6),
+    0 4px 0 var(--border-dark);
+}
+
+#search-input::placeholder { color: var(--text-dim2); }
+
+#search-input:focus {
+  box-shadow:
+    inset 0 0 0 2px var(--gold),
+    inset 0 2px 6px rgba(0,0,0,0.6),
+    0 4px 0 var(--border-dark);
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  backdrop-filter: blur(2px);
+  border: 3px solid var(--border-dark);
+  box-shadow: inset 0 0 0 2px var(--slot-light), 0 10px 24px rgba(0,0,0,0.55);
+  border-radius: 4px;
+  margin-top: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.search-result-item:last-child { border-bottom: none; }
+
+.search-result-item:hover {
+  background: rgba(255, 210, 74, 0.1);
+}
+
+.search-result-item .type {
+  margin-left: auto;
+  color: var(--text-dim2);
+  font-size: 0.75rem;
+}
+
+.hidden { display: none !important; }
+
+.empty-state {
+  text-align: center;
+  color: var(--text-dim2);
+  padding: 3rem 1rem;
+  font-size: 0.95rem;
+}
+
+/* ---------- inventory-slot item icons ---------- */
+
+img {
+  image-rendering: pixelated;
+}
+
+.search-result-item img,
+.item-header img,
+.ingredient-row img,
+details.tree-node > summary img,
+.used-in-chip img {
+  background: var(--slot-bg);
+  border-radius: 3px;
+  box-shadow:
+    inset 2px 2px 0 var(--slot-light),
+    inset -2px -2px 0 var(--slot-dark),
+    0 0 0 2px var(--border-dark);
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.search-result-item img { width: 30px; height: 30px; padding: 4px; }
+details.tree-node > summary img { width: 24px; height: 24px; padding: 3px; }
+.used-in-chip img { width: 24px; height: 24px; padding: 3px; }
+
+/* ---------- item panel ---------- */
+
+.item-panel section {
+  margin-top: 1.9rem;
+}
+
+.item-panel h2 {
+  font-family: var(--wood-font);
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  color: var(--gold);
+  background: linear-gradient(180deg, var(--wood-light), var(--wood) 45%, var(--wood-dark));
+  border: 2px solid var(--border-dark);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -2px 0 rgba(0,0,0,0.35);
+  padding: 0.6rem 0.9rem;
+  margin: 0 0 0.9rem;
+  border-radius: 4px;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.6);
+}
+
+.hint {
+  color: var(--text-dim2);
+  font-size: 0.82rem;
+  margin-top: -0.5rem;
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  background: var(--panel);
+  border: 3px solid var(--border-dark);
+  box-shadow: inset 0 0 0 2px var(--slot-light), 0 6px 0 rgba(0,0,0,0.35);
+  border-radius: 6px;
+  padding: 1.1rem 1.3rem;
+}
+
+.item-header img {
+  width: 60px;
+  height: 60px;
+  padding: 7px;
+}
+
+.item-header h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1.3rem;
+  color: var(--gold);
+}
+
+.item-meta {
+  color: var(--text-dim2);
+  font-size: 0.85rem;
+}
+
+/* ---------- recipe cards ---------- */
+
+.recipe-card {
+  background: var(--panel);
+  border: 3px solid var(--border-dark);
+  box-shadow: inset 0 0 0 2px var(--slot-light), 0 5px 0 rgba(0,0,0,0.3);
+  border-radius: 6px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.recipe-station {
+  color: var(--grass);
+  font-size: 0.8rem;
+  margin-bottom: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ingredient-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.4rem 0;
+}
+
+.ingredient-row img { width: 32px; height: 32px; padding: 4px; }
+
+.ingredient-row .amount {
+  color: var(--grass);
+  font-weight: bold;
+  min-width: 2.4ch;
+}
+
+.ingredient-row a {
+  color: var(--mana);
+  text-decoration: none;
+}
+
+.ingredient-row a:hover { text-decoration: underline; color: var(--gold); }
+
+/* ---------- used-in ---------- */
+
+.used-in-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.used-in-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--panel);
+  border: 2px solid var(--border-dark);
+  box-shadow: inset 0 0 0 2px var(--slot-light);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem 0.3rem 0.35rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.used-in-chip:hover {
+  box-shadow: inset 0 0 0 2px var(--gold);
+}
+
+.muted {
+  color: var(--text-dim2);
+  font-size: 0.9rem;
+}
+
+/* ---------- crafting tree ---------- */
+
+details.tree-node {
+  border-left: 3px dashed var(--wood-light);
+  padding-left: 0.9rem;
+  margin: 0.4rem 0;
+}
+
+details.tree-node > summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  list-style: none;
+  color: var(--text);
+  padding: 0.15rem 0;
+}
+
+details.tree-node > summary::-webkit-details-marker { display: none; }
+
+details.tree-node > summary::before {
+  content: "▶";
+  color: var(--grass);
+  font-size: 0.7rem;
+  transition: transform 0.15s ease;
+}
+
+details.tree-node[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.tree-node-leaf {
+  color: var(--text-dim2);
+}
+
+.tree-station {
+  color: var(--grass-dark);
+  font-size: 0.72rem;
+  margin: 0.3rem 0 0.15rem 1.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.tree-base {
+  color: var(--text-dim2);
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
+/* ---------- footer ---------- */
+
+footer {
+  text-align: center;
+  color: var(--text-dim2);
+  font-size: 0.78rem;
+  padding: 1.6rem;
+  background: linear-gradient(var(--dirt-dark), #0c0805);
+  border-top: 3px solid var(--border-dark);
+}
+
+footer a { color: var(--mana); }

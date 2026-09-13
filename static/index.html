@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terraria Recipe Lookup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Verdana:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>⛏️ Terraria Recipe Lookup</h1>
+    <p class="subtitle">Search any item to see how to craft it, what it's used in, and its full ingredient tree.</p>
+  </header>
+
+  <main>
+    <div class="search-wrap">
+      <input id="search-input" type="text" placeholder="Search an item, e.g. Muramasa, Iron Anvil, Zenith..." autocomplete="off">
+      <div id="search-results" class="search-results hidden"></div>
+    </div>
+
+    <div id="empty-state" class="empty-state">
+      <p>Start typing above to look up an item.</p>
+    </div>
+
+    <div id="item-panel" class="item-panel hidden">
+      <div id="item-header" class="item-header"></div>
+
+      <section>
+        <h2>Crafting Recipe</h2>
+        <div id="recipes-section"></div>
+      </section>
+
+      <section>
+        <h2>Used In</h2>
+        <div id="used-in-section"></div>
+      </section>
+
+      <section>
+        <h2>Full Ingredient Tree</h2>
+        <p class="hint">Expand to see raw materials needed all the way down.</p>
+        <div id="tree-section"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <p>Data sourced from the <a href="https://terraria.wiki.gg" target="_blank" rel="noopener">Official Terraria Wiki</a> (CC BY-NC-SA 4.0). Not affiliated with Re-Logic.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
