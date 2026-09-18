@@ -108,12 +108,13 @@ def fetch_used_in(conn, name):
         for r in rows
     ]
 
-@app.route('/craft_site_icon.ico')
+@app.route('/craft_site_icon.png')
 def favicon():
-    return send_from_directory(
-        os.path.join(app.root_path, 'static'),
-        'craft_site_icon.ico', 
-        mimetype='image/vnd.microsoft.icon'
+    return send_from_directory (
+        os.path.join(app.root_path, 'static'), 
+        'craft_site_icon.png',  
+        mimetype='image/png' ,
+        max_age=0,
     )
 
 @app.route('/favicon.ico')
