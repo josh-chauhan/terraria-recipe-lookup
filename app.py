@@ -10,7 +10,7 @@ import os
 import sqlite3
 import urllib.parse
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "terraria.db")
 WIKI_IMAGES = "https://terraria.wiki.gg/images/"
@@ -107,6 +107,14 @@ def fetch_used_in(conn, name):
         }
         for r in rows
     ]
+
+@app.route('/craft_site_icon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'craft_site_icon.ico', 
+        mimetype='image/vnd.microsoft.icon'
+    )
 
 
 @app.route("/")
