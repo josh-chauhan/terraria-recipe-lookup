@@ -10,6 +10,13 @@ const treeSection = document.getElementById('tree-section');
 let debounceTimer = null;
 
 function onImgError(img) {
+  // A handful of item sprites (mostly animated tiles) are .gif instead of
+  // .png - try that once before giving up and hiding the broken icon.
+  if (img.src.endsWith('.png') && !img.dataset.triedGif) {
+    img.dataset.triedGif = '1';
+    img.src = img.src.slice(0, -4) + '.gif';
+    return;
+  }
   img.style.visibility = 'hidden';
 }
 

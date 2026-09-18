@@ -13,7 +13,7 @@ import urllib.parse
 from flask import Flask, jsonify, request
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "terraria.db")
-WIKI_FILEPATH = "https://terraria.wiki.gg/wiki/Special:FilePath/"
+WIKI_IMAGES = "https://terraria.wiki.gg/images/"
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 
@@ -30,11 +30,36 @@ def get_db():
 
 def image_url(item_name):
     """
-    Build a wiki image URL using MediaWiki's Special:FilePath, which
-    redirects to the real (hashed) file URL without needing an extra API call.
+    Build the wiki's actual image URL. Item sprites are hosted directly at
+    https://terraria.wiki.gg/images/<Item_Name>.png - this matches the
+    <img> src the wiki itself renders on item pages. A handful of animated
+    items (e.g. "Any Wood") use .gif instead; the frontend retries with
+    that extension on load failure before giving up.
     """
     filename = item_name.replace(" ", "_") + ".png"
-    return WIKI_FILEPATH + urllib.parse.quote(filename)
+    return WIKI_IMAGES + urllib.parse.quote(filename)
+
+
+def format_coins(copper):
+    """
+    Format a total-copper-coin value the way Terraria displays currency:
+    1 Platinum = 100 Gold = 10,000 Silver = 1,000,000 Copper.
+    """
+    if not copper:
+        return None
+    platinum, remainder = divmod(copper, 1_000_000)
+    gold, remainder = divmod(remainder, 10_000)
+    silver, copper_rem = divmod(remainder, 100)
+    parts = []
+    if platinum:
+        parts.append(f"{platinum} Platinum")
+    if gold:
+        parts.append(f"{gold} Gold")
+    if silver:
+        parts.append(f"{silver} Silver")
+    if copper_rem or not parts:
+        parts.append(f"{copper_rem} Copper")
+    return " ".join(parts)
 
 
 def fetch_recipes_for(conn, name):
@@ -127,7 +152,7 @@ def item_detail(name):
         "name": name,
         "type": item["type"] if item else None,
         "rarity": item["rarity"] if item else None,
-        "sell_value": item["sell_value"] if item else None,
+        "sell_value": format_coins(item["sell_copper"]) if item else None,
         "research": item["research"] if item else None,
         "image": image_url(name),
         "recipes": recipes,

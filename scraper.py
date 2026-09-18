@@ -20,7 +20,8 @@ refresh it after a game update):
 import sqlite3
 import sys
 import time
-
+import html
+import re
 import requests
 
 API_URL = "https://terraria.wiki.gg/api.php"
@@ -74,6 +75,43 @@ def cargo_query(tables, fields):
         time.sleep(REQUEST_DELAY)
 
 
+def clean_name(name):
+    """
+    Clean up a page/item name pulled from Cargo.
+
+    Some names carry a wiki-internal anchor suffix used to pick a specific
+    icon version, e.g. "Iron Bar#i:old" -> "Iron Bar". Also unescapes any
+    HTML entities that occasionally leak into these fields.
+    """
+    if not name:
+        return name
+    name = html.unescape(name)
+    name = name.split("#", 1)[0]
+    return name.strip()
+
+
+SORT_VALUE_RE = re.compile(r'data-sort-value="(\d+)"')
+
+
+def parse_sell_copper(sell_html):
+    """
+    The Recipes/Items 'sell' field is pre-rendered HTML for a coin display
+    widget, e.g.:
+        <span class="coin" ... data-sort-value="320">...
+    The data-sort-value attribute holds the total price in copper coins,
+    which is what we actually want to store.
+    """
+    if not sell_html:
+        return None
+    match = SORT_VALUE_RE.search(sell_html)
+    if match:
+        return int(match.group(1))
+    try:
+        return int(float(str(sell_html).replace(",", "")))
+    except (TypeError, ValueError):
+        return None
+
+
 def parse_args_field(args_value):
     """
     Parse the Recipes Cargo table's `args` field, formatted like:
@@ -89,7 +127,7 @@ def parse_args_field(args_value):
         if not chunk:
             continue
         parts = chunk.split("¦")
-        name = parts[0].strip()
+        name = clean_name(parts[0])
         amount = 1
         if len(parts) > 1:
             try:
@@ -123,7 +161,7 @@ def build_database():
             item_id INTEGER,
             type TEXT,
             rarity TEXT,
-            sell_value TEXT,
+            sell_copper INTEGER,
             research INTEGER
         );
 
@@ -150,21 +188,22 @@ def build_database():
     print("Fetching items from the Items Cargo table (this may take a minute)...")
     item_count = 0
     for row in cargo_query(tables="Items", fields="name,itemid,type,rare,sell,research"):
-        name = row.get("name")
+        name = clean_name(row.get("name"))
         if not name:
             continue
         cur.execute(
-            "INSERT OR REPLACE INTO items (name, item_id, type, rarity, sell_value, research) "
+            "INSERT OR REPLACE INTO items (name, item_id, type, rarity, sell_copper, research) "
             "VALUES (?, ?, ?, ?, ?, ?)",
             (
                 name,
                 to_int(row.get("itemid"), default=None) if row.get("itemid") else None,
-                row.get("type"),
-                row.get("rare"),
-                row.get("sell"),
+                clean_name(row.get("type")),
+                clean_name(row.get("rare")),
+                parse_sell_copper(row.get("sell")),
                 to_int(row.get("research"), default=0),
             ),
         )
+
         item_count += 1
         if item_count % 500 == 0:
             print(f"  ...{item_count} items so far")
@@ -175,11 +214,11 @@ def build_database():
     print("Fetching recipes from the Recipes Cargo table...")
     recipe_count = 0
     for row in cargo_query(tables="Recipes", fields="result,resultid,amount,station,args"):
-        result_name = row.get("result")
+        result_name = clean_name(row.get("result"))
         if not result_name:
             continue
         result_amount = to_int(row.get("amount"), default=1)
-        station = row.get("station") or "By Hand"
+        station = clean_name(row.get("station")) or "By Hand"
 
         cur.execute(
             "INSERT INTO recipes (result_name, result_amount, station) VALUES (?, ?, ?)",
