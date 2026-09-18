@@ -116,6 +116,10 @@ def favicon():
         mimetype='image/vnd.microsoft.icon'
     )
 
+@app.route('/favicon.ico')
+def favicon_fallback():
+    return favicon()
+
 
 @app.route("/")
 def index():
