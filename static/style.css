@@ -84,7 +84,7 @@ main {
 
 .site-header h1 {
   margin: 0 0 0.9rem;
-  font-family: var(--wood-font);
+  font-family: "Andy", sans-serif;
   font-size: 1.35rem;
   line-height: 1.6;
   letter-spacing: 1px;
