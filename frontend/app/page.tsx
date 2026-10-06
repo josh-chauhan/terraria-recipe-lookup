@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SearchItem = {
   name: string;
@@ -65,27 +65,54 @@ export default function Home() {
   const [tree, setTree] = useState<TreeNode | null>(null);
   const [loadingItem, setLoadingItem] = useState(false);
   const [loadingTree, setLoadingTree] = useState(false);
+  const suppressSearchRef = useRef(false);
+  const searchAbortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed) {
-      setResults([]);
       return;
     }
 
+    if (suppressSearchRef.current) {
+      suppressSearchRef.current = false;
+      return;
+    }
+
+    searchAbortControllerRef.current?.abort();
+    const controller = new AbortController();
+    searchAbortControllerRef.current = controller;
+
     const timer = window.setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, {
+          signal: controller.signal,
+        });
         const items = (await res.json()) as SearchItem[];
-        setResults(items);
+        if (!controller.signal.aborted) {
+          setResults(items);
+        }
       } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
         console.error("Search failed", error);
         setResults([]);
       }
     }, 200);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
   }, [query]);
+
+  const selectSearchItem = (name: string) => {
+    suppressSearchRef.current = true;
+    setQuery(name);
+    setResults([]);
+    void loadItem(name);
+  };
 
   const loadItem = async (name: string) => {
     setLoadingItem(true);
@@ -174,7 +201,13 @@ export default function Home() {
             id="search-input"
             type="text"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              const nextQuery = event.target.value;
+              setQuery(nextQuery);
+              if (!nextQuery.trim()) {
+                setResults([]);
+              }
+            }}
             placeholder="Search an item, e.g. Muramasa, Iron Anvil, Zenith..."
             autoComplete="off"
           />
@@ -185,11 +218,7 @@ export default function Home() {
                 <div
                   key={item.name}
                   className="search-result-item"
-                  onClick={() => {
-                    setQuery(item.name);
-                    setResults([]);
-                    void loadItem(item.name);
-                  }}
+                  onClick={() => selectSearchItem(item.name)}
                 >
                   {imageTag(item.name, item.image, "search-item-img")}
                   <span>{item.name}</span>
