@@ -175,6 +175,15 @@ def item_detail(name):
     return jsonify(result)
 
 
+@app.route("/ANDYB.ttf")
+def andy_font():
+    return send_from_directory(
+        os.path.join(app.root_path, "frontend", "public"),
+        "ANDYB.ttf",
+        mimetype="font/ttf",
+    )
+
+
 @app.route("/api/tree/<path:name>")
 def item_tree(name):
     try:
