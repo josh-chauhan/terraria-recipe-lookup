@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: "Andy";
+  font-family: "Andy Bold";
   src: url("/ANDYB.ttf") format("truetype");
   font-style: normal;
   font-weight: 400;
@@ -30,7 +30,7 @@
   --health: #e5473f;
   --gold: #ffd24a;
   --wood-font: 'Press Start 2P', 'Verdana', sans-serif;
-  --body-font: "Andy", "Verdana", "Segoe UI", sans-serif;
+  --body-font: "Andy Bold", "Verdana", "Segoe UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -84,7 +84,7 @@ main {
 
 .site-header h1 {
   margin: 0 0 0.9rem;
-  font-family: "Andy", sans-serif;
+  font-family: "Andy Bold", sans-serif;
   font-size: 1.35rem;
   line-height: 1.6;
   letter-spacing: 1px;
