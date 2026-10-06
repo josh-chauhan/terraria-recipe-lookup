@@ -238,6 +238,11 @@ export default function Home() {
         {selectedItem && (
           <div className="item-panel">
             <div className="item-header">
+                <img
+                  src="/JungleTreeTerra.png"
+                  alt="rich-mahogany-tree"
+                  className="jungle-tree-image"
+                />
               {imageTag(selectedItem.name, selectedItem.image, "item-header-img")}
               <div>
                 <h3>{selectedItem.name}</h3>

@@ -166,6 +166,14 @@ img {
   image-rendering: pixelated;
 }
 
+.jungle-tree-image {
+
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .search-item-img,
 .item-header-img,
 .ingredient-icon,
