@@ -87,7 +87,7 @@ main {
 
 .site-header h1 {
   margin: 0 0 0.9rem;
-  font-family: "Press Start 2P", "Verdana", sans-serif;
+  font-family: var(--body-font);
   font-size: 1.35rem;
   line-height: 1.6;
   letter-spacing: 1px;
@@ -186,7 +186,7 @@ img {
 
 .item-panel section { margin-top: 1.9rem; }
 .item-panel h2 {
-  font-family: "Press Start 2P", "Verdana", sans-serif;
+  font-family: var(--body-font);
   font-size: 0.85rem;
   letter-spacing: 0.5px;
   color: var(--gold);
