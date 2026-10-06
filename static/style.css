@@ -1,3 +1,12 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Andy";
+  src: url("/ANDYB.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+}
+
 :root {
   --sky-top: #24344a;
   --sky-bottom: #10151d;
@@ -21,7 +30,7 @@
   --health: #e5473f;
   --gold: #ffd24a;
   --wood-font: 'Press Start 2P', 'Verdana', sans-serif;
-  --body-font: 'Verdana', 'Segoe UI', sans-serif;
+  --body-font: "Andy", "Verdana", "Segoe UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
