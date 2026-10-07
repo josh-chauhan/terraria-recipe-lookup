@@ -196,115 +196,122 @@ export default function Home() {
       </header>
 
       <main>
-        <div className="search-wrap">
-          <input
-            id="search-input"
-            type="text"
-            value={query}
-            onChange={(event) => {
-              const nextQuery = event.target.value;
-              setQuery(nextQuery);
-              if (!nextQuery.trim()) {
-                setResults([]);
-              }
-            }}
-            placeholder="Search an item, e.g. Muramasa, Iron Anvil, Zenith..."
-            autoComplete="off"
+        <aside className="jungle-tree-sidebar">
+          <img
+            src="/JungleTreeTerra.png"
+            alt="Rich Mahogany tree"
+            className="jungle-tree-image"
           />
+        </aside>
 
-          {results.length > 0 && query.trim() && (
-            <div id="search-results" className="search-results">
-              {results.map((item) => (
-                <div
-                  key={item.name}
-                  className="search-result-item"
-                  onClick={() => selectSearchItem(item.name)}
-                >
-                  {imageTag(item.name, item.image, "search-item-img")}
-                  <span>{item.name}</span>
-                  {item.type ? <span className="type">{item.type}</span> : null}
-                </div>
-              ))}
+        <div className="page-content">
+          <div className="search-wrap">
+            <input
+              id="search-input"
+              type="text"
+              value={query}
+              onChange={(event) => {
+                const nextQuery = event.target.value;
+                setQuery(nextQuery);
+                if (!nextQuery.trim()) {
+                  setResults([]);
+                }
+              }}
+              placeholder="Search an item, e.g. Muramasa, Iron Anvil, Zenith..."
+              autoComplete="off"
+            />
+
+            {results.length > 0 && query.trim() && (
+              <div id="search-results" className="search-results">
+                {results.map((item) => (
+                  <div
+                    key={item.name}
+                    className="search-result-item"
+                    onClick={() => selectSearchItem(item.name)}
+                  >
+                    {imageTag(item.name, item.image, "search-item-img")}
+                    <span>{item.name}</span>
+                    {item.type ? <span className="type">{item.type}</span> : null}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {!selectedItem && !loadingItem && (
+            <div className="empty-state">
+              <p>Start typing above to look up an item.</p>
             </div>
           )}
-        </div>
 
-        {!selectedItem && !loadingItem && (
-          <div className="empty-state">
-            <p>Start typing above to look up an item.</p>
-          </div>
-        )}
-
-        {selectedItem && (
-          <div className="item-panel">
-            <div className="item-header">
-                <img
-                  src="/JungleTreeTerra.png"
-                  alt="rich-mahogany-tree"
-                  className="jungle-tree-image"
-                />
-              {imageTag(selectedItem.name, selectedItem.image, "item-header-img")}
-              <div>
-                <h3>{selectedItem.name}</h3>
-                <div className="item-meta">
-                  {[selectedItem.type, selectedItem.rarity ? `Rarity: ${selectedItem.rarity}` : null, selectedItem.sell_value ? `Sell: ${selectedItem.sell_value}` : null].filter(Boolean).join(" • ") || "No extra stats on file"}
+          {selectedItem && (
+            <div className="item-panel">
+            <div className="item-content">
+              <div className="item-header">
+                {imageTag(selectedItem.name, selectedItem.image, "item-header-img")}
+                <div>
+                  <h3>{selectedItem.name}</h3>
+                  <div className="item-meta">
+                    {[selectedItem.type, selectedItem.rarity ? `Rarity: ${selectedItem.rarity}` : null, selectedItem.sell_value ? `Sell: ${selectedItem.sell_value}` : null].filter(Boolean).join(" • ") || "No extra stats on file"}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <section>
-              <h2>Crafting Recipe</h2>
-              {selectedItem.recipes.length === 0 ? (
-                <p className="muted">This item has no known crafting recipe (it may be found, dropped, bought, or otherwise obtained instead).</p>
-              ) : (
-                selectedItem.recipes.map((recipe, index) => (
-                  <div className="recipe-card" key={`${selectedItem.name}-recipe-${index}`}>
-                    <div className="recipe-station">
-                      Crafted at: {recipe.station}{recipe.result_amount > 1 ? ` (yields ${recipe.result_amount})` : ""}
+              <section>
+                <h2>Crafting Recipe</h2>
+                {selectedItem.recipes.length === 0 ? (
+                  <p className="muted">This item has no known crafting recipe (it may be found, dropped, bought, or otherwise obtained instead).</p>
+                ) : (
+                  selectedItem.recipes.map((recipe, index) => (
+                    <div className="recipe-card" key={`${selectedItem.name}-recipe-${index}`}>
+                      <div className="recipe-station">
+                        Crafted at: {recipe.station}{recipe.result_amount > 1 ? ` (yields ${recipe.result_amount})` : ""}
+                      </div>
+                      {recipe.ingredients.map((ingredient) => (
+                        <div className="ingredient-row" key={`${ingredient.name}-${ingredient.amount ?? "mat"}`}>
+                          {imageTag(ingredient.name, ingredient.image, "ingredient-icon")}
+                          <span className="amount">{ingredient.amount}x</span>
+                          <a href="#" onClick={(event) => { event.preventDefault(); setQuery(ingredient.name); void loadItem(ingredient.name); }}>
+                            {ingredient.name}
+                          </a>
+                        </div>
+                      ))}
                     </div>
-                    {recipe.ingredients.map((ingredient) => (
-                      <div className="ingredient-row" key={`${ingredient.name}-${ingredient.amount ?? "mat"}`}>
-                        {imageTag(ingredient.name, ingredient.image, "ingredient-icon")}
-                        <span className="amount">{ingredient.amount}x</span>
-                        <a href="#" onClick={(event) => { event.preventDefault(); setQuery(ingredient.name); void loadItem(ingredient.name); }}>
-                          {ingredient.name}
-                        </a>
+                  ))
+                )}
+              </section>
+
+              <section>
+                <h2>Used In</h2>
+                {selectedItem.used_in.length === 0 ? (
+                  <p className="muted">Not used as an ingredient in any known recipe.</p>
+                ) : (
+                  <div className="used-in-grid">
+                    {selectedItem.used_in.map((item) => (
+                      <div className="used-in-chip" key={item.name} onClick={() => { setQuery(item.name); void loadItem(item.name); }}>
+                        {imageTag(item.name, item.image, "used-item-icon")}
+                        <span>{item.name}</span>
                       </div>
                     ))}
                   </div>
-                ))
-              )}
-            </section>
+                )}
+              </section>
 
-            <section>
-              <h2>Used In</h2>
-              {selectedItem.used_in.length === 0 ? (
-                <p className="muted">Not used as an ingredient in any known recipe.</p>
-              ) : (
-                <div className="used-in-grid">
-                  {selectedItem.used_in.map((item) => (
-                    <div className="used-in-chip" key={item.name} onClick={() => { setQuery(item.name); void loadItem(item.name); }}>
-                      {imageTag(item.name, item.image, "used-item-icon")}
-                      <span>{item.name}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section>
-              <h2>Full Ingredient Tree</h2>
-              <p className="hint">Expand to see raw materials needed all the way down.</p>
-              {loadingTree ? (
-                <p className="muted">Loading tree...</p>
-              ) : tree ? (
-                renderTreeNode(tree, true)
-              ) : (
-                <p className="muted">Could not load the crafting tree.</p>
-              )}
-            </section>
+              <section>
+                <h2>Full Ingredient Tree</h2>
+                <p className="hint">Expand to see raw materials needed all the way down.</p>
+                {loadingTree ? (
+                  <p className="muted">Loading tree...</p>
+                ) : tree ? (
+                  renderTreeNode(tree, true)
+                ) : (
+                  <p className="muted">Could not load the crafting tree.</p>
+                )}
+              </section>
+            </div>
           </div>
-        )}
+          )}
+        </div>
       </main>
 
       <footer>
