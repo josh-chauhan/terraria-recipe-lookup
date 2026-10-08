@@ -273,7 +273,26 @@ img {
   color: #fff2aa;
 }
 
-.item-meta { color: var(--text-dim2); font-size: 0.85rem; }
+.item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  color: var(--text-dim2);
+  font-size: 0.85rem;
+}
+
+.item-meta-chip {
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(19,34,77,0.35);
+}
+
+.item-meta-chip strong { color: var(--text); }
+
+.rarity-value {
+  font-weight: bold;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.85);
+}
 
 .recipe-card {
   background: linear-gradient(135deg, rgba(75,98,154,0.94), rgba(49,70,126,0.94));

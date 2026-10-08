@@ -10,10 +10,14 @@ import os
 import sqlite3
 import urllib.parse
 
-from flask import Flask, jsonify, request, send_from_directory
+import requests
+from flask import Flask, Response, jsonify, request, send_from_directory
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "terraria.db")
-WIKI_IMAGES = "https://terraria.wiki.gg/images/"
+WIKI_FILE_PATH = "https://terraria.wiki.gg/wiki/Special:FilePath/"
+WIKI_IMAGE_HEADERS = {
+    "User-Agent": "TerrariaRecipeLookup/1.0 (personal/educational project)"
+}
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 
@@ -30,14 +34,11 @@ def get_db():
 
 def image_url(item_name):
     """
-    Build the wiki's actual image URL. Item sprites are hosted directly at
-    https://terraria.wiki.gg/images/<Item_Name>.png - this matches the
-    <img> src the wiki itself renders on item pages. A handful of animated
-    items (e.g. "Any Wood") use .gif instead; the frontend retries with
-    that extension on load failure before giving up.
+    Return a same-origin URL so the frontend can load wiki sprites through
+    the app's image proxy, including when the wiki blocks cross-origin images.
     """
     filename = item_name.replace(" ", "_") + ".png"
-    return WIKI_IMAGES + urllib.parse.quote(filename)
+    return "/api/image/" + urllib.parse.quote(filename, safe="")
 
 
 def format_coins(copper):
@@ -120,6 +121,30 @@ def favicon():
 @app.route('/favicon.ico')
 def favicon_fallback():
     return favicon()
+
+
+@app.route("/api/image/<path:filename>")
+def proxy_image(filename):
+    if (
+        filename.startswith("/")
+        or "\\" in filename
+        or any(part in {".", ".."} for part in filename.split("/"))
+        or not filename.lower().endswith((".png", ".gif"))
+    ):
+        return jsonify({"error": "Invalid image filename."}), 400
+
+    encoded_filename = urllib.parse.quote(filename, safe="")
+    upstream = requests.get(
+        WIKI_FILE_PATH + encoded_filename,
+        headers=WIKI_IMAGE_HEADERS,
+        timeout=20,
+    )
+    return Response(
+        upstream.content,
+        status=upstream.status_code,
+        content_type=upstream.headers.get("Content-Type", "application/octet-stream"),
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @app.route("/")

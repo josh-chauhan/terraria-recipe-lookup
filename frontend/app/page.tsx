@@ -45,6 +45,125 @@ type TreeNode = {
   }>;
 };
 
+const TYPE_LABELS: Record<string, string> = {
+  accessory: "Accessory",
+  ammunition: "Ammunition",
+  armor: "Armor",
+  bait: "Bait",
+  "background object": "Background Object",
+  bar: "Bar",
+  block: "Block",
+  boots: "Boots",
+  brick: "Brick",
+  "boss summon": "Boss Summon",
+  consumable: "Consumable",
+  crate: "Crate",
+  "crafting material": "Crafting Material",
+  "crafting station": "Crafting Station",
+  dye: "Dye",
+  "event summon": "Event Summon",
+  food: "Food",
+  furniture: "Furniture",
+  "grab bag": "Grab Bag",
+  "hair dye": "Hair Dye",
+  key: "Key",
+  "light pet": "Light Pet",
+  "light source": "Light Source",
+  mechanism: "Mechanism",
+  miscellaneous: "Miscellaneous",
+  "mount summon": "Mount Summon",
+  "item summon": "Item Summon",
+  ore: "Ore",
+  "permanent booster": "Permanent Booster",
+  "pet summon": "Pet Summon",
+  potion: "Potion",
+  seeds: "Seeds",
+  set: "Set",
+  shield: "Shield",
+  storage: "Storage",
+  tool: "Tool",
+  vanity: "Vanity",
+  wall: "Wall",
+  weapon: "Weapon",
+};
+
+const TYPE_COMBINATIONS: Record<string, string> = {
+  "armor^set": "Armor Set",
+  "vanity^set": "Vanity Set",
+};
+
+const RARITY_LABELS: Record<string, string> = {
+  "0": "White",
+  "1": "Blue",
+  "2": "Green",
+  "3": "Orange",
+  "4": "Light Red",
+  "5": "Pink",
+  "6": "Light Purple",
+  "7": "Lime",
+  "8": "Yellow",
+  "9": "Cyan",
+  "10": "Red",
+  "11": "Purple",
+  "12": "Royal Blue",
+  "13": "Teal/Purple",
+  "14": "Ethereal",
+  "15": "Black",
+};
+
+const RARITY_COLORS: Record<string, string> = {
+  "-13": "#b8b8b8",
+  "-12": "#ff69b4",
+  "-1": "#b8b8b8",
+  "0": "#ffffff",
+  "1": "#9696ff",
+  "2": "#96ff96",
+  "3": "#ffc896",
+  "4": "#ff9696",
+  "5": "#ff96ff",
+  "6": "#c07aff",
+  "7": "#96ff00",
+  "8": "#ffff00",
+  "9": "#00e5ff",
+  "10": "#ff4d4d",
+  "11": "#ff00ff",
+  "12": "#4169ff",
+  "13": "#40d6bd",
+  "14": "#d36bff",
+  "15": "#ffffff",
+};
+
+function displayMappedValue(value: string, labels: Record<string, string>) {
+  return labels[value.trim().toLowerCase()] ?? value;
+}
+
+function rarityTier(value: string) {
+  const sortValue = value.match(/data-sort-value=["'](\d+)["']/i)?.[1];
+  if (sortValue) {
+    return String(Number(sortValue));
+  }
+
+  const rarityLevel = value.match(/rarity level:\s*(-?\d+)/i)?.[1];
+  if (rarityLevel) {
+    return rarityLevel;
+  }
+
+  const trimmedValue = value.trim();
+  return /^-?\d+$/.test(trimmedValue) ? trimmedValue : undefined;
+}
+
+function displayType(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (TYPE_COMBINATIONS[normalized]) {
+    return TYPE_COMBINATIONS[normalized];
+  }
+
+  return normalized
+    .split("^")
+    .map((part) => TYPE_LABELS[part.trim()] ?? part.trim())
+    .join(", ");
+}
+
 function imageTag(name: string, image: string, className = "") {
   return <img src={image} alt={name} className={className} onError={(e) => {
     const target = e.currentTarget;
@@ -231,7 +350,7 @@ export default function Home() {
                   >
                     {imageTag(item.name, item.image, "search-item-img")}
                     <span>{item.name}</span>
-                    {item.type ? <span className="type">{item.type}</span> : null}
+                    {item.type ? <span className="type">{displayType(item.type)}</span> : null}
                   </div>
                 ))}
               </div>
@@ -252,7 +371,30 @@ export default function Home() {
                 <div>
                   <h3>{selectedItem.name}</h3>
                   <div className="item-meta">
-                    {[selectedItem.type, selectedItem.rarity ? `Rarity: ${selectedItem.rarity}` : null, selectedItem.sell_value ? `Sell: ${selectedItem.sell_value}` : null].filter(Boolean).join(" • ") || "No extra stats on file"}
+                    {selectedItem.type && (
+                      <span className="item-meta-chip">
+                        <strong>Type:</strong> {displayType(selectedItem.type)}
+                      </span>
+                    )}
+                    {selectedItem.rarity && (
+                      <span className="item-meta-chip">
+                        <strong>Rarity:</strong>{" "}
+                        <span
+                          className="rarity-value"
+                          style={{ color: RARITY_COLORS[rarityTier(selectedItem.rarity) ?? ""] }}
+                        >
+                          {displayMappedValue(selectedItem.rarity, RARITY_LABELS)}
+                        </span>
+                      </span>
+                    )}
+                    {selectedItem.sell_value && (
+                      <span className="item-meta-chip">
+                        <strong>Sell:</strong> {selectedItem.sell_value}
+                      </span>
+                    )}
+                    {!selectedItem.type && !selectedItem.rarity && !selectedItem.sell_value && (
+                      <span>No extra stats on file</span>
+                    )}
                   </div>
                 </div>
               </div>
