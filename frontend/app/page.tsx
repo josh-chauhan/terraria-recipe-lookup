@@ -319,7 +319,25 @@ export default function Home() {
           <img
             src="/JungleTreeTerra.png"
             alt="Rich Mahogany tree"
-            className="jungle-tree-image"
+            className="sidebar-sprite"
+          />
+          <img
+            src="/old-man-sprite.webp"
+            alt="Terraria Old Man"
+            className="sidebar-sprite"
+          />
+        </aside>
+
+        <aside className="right-sidebar" aria-label="World sprites">
+          <img
+            src="/merchant-sprite.png"
+            alt="Terraria Merchant"
+            className="sidebar-sprite merchant-sprite"
+          />
+          <img
+            src="/hallow-tree.webp"
+            alt="Hallow Tree"
+            className="sidebar-sprite hallow-tree-sprite"
           />
         </aside>
 

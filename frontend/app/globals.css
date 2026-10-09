@@ -60,10 +60,10 @@ main {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 130px minmax(0, 780px);
+  grid-template-columns: 130px minmax(0, 780px) 190px;
   align-items: start;
   gap: 1.75rem;
-  max-width: 1040px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 0 1rem 3rem;
   width: 100%;
@@ -167,7 +167,7 @@ img {
   image-rendering: pixelated;
 }
 
-.jungle-tree-image {
+.sidebar-sprite {
   display: block;
   width: 118px;
   height: auto;
@@ -176,12 +176,18 @@ img {
   filter: drop-shadow(0 5px 2px rgba(18,42,56,0.35));
 }
 
+.merchant-sprite { width: 180px; }
+.hallow-tree-sprite { width: 90px; }
+
 .item-panel {
   width: 100%;
   margin: 1.1rem 0 0;
 }
 
 .jungle-tree-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   position: sticky;
   top: 1.5rem;
   grid-column: 1;
@@ -189,8 +195,30 @@ img {
   padding-top: 0.15rem;
 }
 
+.right-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 1.5rem;
+  grid-column: 3;
+  grid-row: 1 / span 4;
+  padding-top: 0.15rem;
+}
+
 .item-content {
   min-width: 0;
+}
+
+@media (max-width: 1000px) {
+  main {
+    grid-template-columns: 130px minmax(0, 780px);
+    max-width: 1040px;
+  }
+
+  .right-sidebar {
+    display: none;
+  }
 }
 
 @media (max-width: 760px) {
@@ -200,7 +228,7 @@ img {
     padding: 0 0.75rem 2rem 0.5rem;
   }
 
-  .jungle-tree-image {
+  .sidebar-sprite {
     width: 100%;
   }
 
