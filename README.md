@@ -3,8 +3,14 @@
 Search Terraria items for their crafting recipes, uses, and ingredient trees.
 Data comes from the [Official Terraria Wiki](https://terraria.wiki.gg)'s
 structured **Cargo database** through its public `action=cargoquery` API.
-Content is CC BY-NC-SA 4.0; this is an unofficial fan tool, not affiliated
+Content is CC BY-NC-SA 4.0; this is an unofficial fan tool created by me, I am not affiliated
 with Re-Logic.
+
+This project is intended to strengthen my ability to develop full stack applications and explore system design options. I attempted to use many industrial tools and conventions in making this. 
+
+<u>Although many crafting recipe's are made public on the sites wiki, **my goal is to make the process of finding them a lot less time consuming and cluttered.**
+
+**A responsive, light and easily used user interface was crucial in the creation of this site.**</u>
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for the system overview, technology
 choices, trade-offs, and alternatives considered.
