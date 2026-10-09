@@ -6,7 +6,7 @@ structured **Cargo database** through its public `action=cargoquery` API.
 Content is CC BY-NC-SA 4.0; this is an unofficial fan tool created by me, I am not affiliated
 with Re-Logic.
 
-This project is intended to strengthen my ability to develop full stack applications and explore system design options. I attempted to use many industrial tools and conventions in making this. 
+**This project is intended to strengthen my ability to develop full stack applications and explore system design options. I attempted to use many industrial tools and conventions in making this.**
 
 <u>Although many crafting recipe's are made public on the sites wiki, **my goal is to make the process of finding them a lot less time consuming and cluttered.**
 
