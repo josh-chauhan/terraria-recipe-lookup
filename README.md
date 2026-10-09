@@ -6,6 +6,31 @@ structured **Cargo database** through its public `action=cargoquery` API.
 Content is CC BY-NC-SA 4.0; this is an unofficial fan tool, not affiliated
 with Re-Logic.
 
+## How the architecture evolved
+
+The project has grown in layers, and the earlier data path is still part of
+the current deployment:
+
+1. **Structured wiki data:** [`scraper.py`](./scraper.py) queries the wiki's
+   Cargo API and builds the local `terraria.db` SQLite dataset. This avoids
+   depending on the layout of rendered wiki pages.
+2. **Flask and SQLite:** [`app.py`](./app.py) began as a Flask app that read
+   SQLite directly and served a small browser UI from [`static/`](./static/).
+   It can still run in that mode for a lightweight local setup.
+3. **Separate Next.js frontend:** [`frontend/`](./frontend/) adds a React and
+   TypeScript interface. It calls Flask's JSON endpoints; Next.js rewrites
+   `/api` requests to the API service rather than querying the database itself.
+4. **PostgreSQL and containers:** [`docker-compose.yml`](./docker-compose.yml)
+   now runs the Next.js frontend, Flask API, and PostgreSQL as separate
+   services. On first startup, [`migrate_sqlite_to_postgres.py`](./migrate_sqlite_to_postgres.py)
+   imports the existing SQLite snapshot into a persistent PostgreSQL volume.
+   The SQLite file remains the scraper's output and the source for an
+   intentional database refresh.
+
+So the current Compose path is **Cargo API → SQLite snapshot → PostgreSQL →
+Flask JSON API → Next.js UI**. The older **Flask + SQLite + static UI** path
+remains available when running `python app.py` without PostgreSQL settings.
+
 ## Run the full app with Docker Compose
 
 Docker Compose starts the Next.js frontend, Flask API, and PostgreSQL database.

@@ -8,7 +8,7 @@ from contextlib import closing
 
 import psycopg
 
-
+# PostgreSQL schema for imported dataset from the wiki
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "terraria.db")
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS items (
