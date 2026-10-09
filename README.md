@@ -6,30 +6,29 @@ structured **Cargo database** through its public `action=cargoquery` API.
 Content is CC BY-NC-SA 4.0; this is an unofficial fan tool, not affiliated
 with Re-Logic.
 
-## How the architecture evolved
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the system overview, technology
+choices, trade-offs, and alternatives considered.
 
-The project has grown in layers, and the earlier data path is still part of
-the current deployment:
+## Architecture and deployments
+
+The hosted website and the optional Docker Compose setup use different
+deployment paths:
 
 1. **Structured wiki data:** [`scraper.py`](./scraper.py) queries the wiki's
    Cargo API and builds the local `terraria.db` SQLite dataset. This avoids
    depending on the layout of rendered wiki pages.
-2. **Flask and SQLite:** [`app.py`](./app.py) began as a Flask app that read
-   SQLite directly and served a small browser UI from [`static/`](./static/).
-   It can still run in that mode for a lightweight local setup.
-3. **Separate Next.js frontend:** [`frontend/`](./frontend/) adds a React and
-   TypeScript interface. It calls Flask's JSON endpoints; Next.js rewrites
-   `/api` requests to the API service rather than querying the database itself.
-4. **PostgreSQL and containers:** [`docker-compose.yml`](./docker-compose.yml)
-   now runs the Next.js frontend, Flask API, and PostgreSQL as separate
-   services. On first startup, [`migrate_sqlite_to_postgres.py`](./migrate_sqlite_to_postgres.py)
-   imports the existing SQLite snapshot into a persistent PostgreSQL volume.
-   The SQLite file remains the scraper's output and the source for an
-   intentional database refresh.
+2. **Hosted website:** Vercel serves the Next.js frontend, which forwards API
+   requests to the Flask backend hosted on Render. The Render service reads
+   the checked-in SQLite dataset.
+3. **Optional Docker Compose setup:** [`docker-compose.yml`](./docker-compose.yml)
+   runs the Next.js frontend, Flask API, and PostgreSQL together. On first
+   startup, [`migrate_sqlite_to_postgres.py`](./migrate_sqlite_to_postgres.py)
+   imports the SQLite snapshot into a persistent PostgreSQL volume.
 
-So the current Compose path is **Cargo API → SQLite snapshot → PostgreSQL →
-Flask JSON API → Next.js UI**. The older **Flask + SQLite + static UI** path
-remains available when running `python app.py` without PostgreSQL settings.
+The current hosted path is **Vercel → Flask on Render → SQLite**. The optional
+Compose path is **SQLite snapshot → PostgreSQL → Flask API → Next.js UI**.
+PostgreSQL is not automatically used by the hosted site just because it is
+included in the repository.
 
 ## Run the full app with Docker Compose
 
@@ -81,7 +80,7 @@ file, and run `docker compose up --build -d`. Keep the named `postgres_data`
 volume persistent and back it up. The app stays available while the remote
 host is running; turning off your laptop does not stop a remote host.
 
-## Run only the Flask API without Docker
+## Run Flask locally without Docker
 
 For the local SQLite setup, create and activate a Python environment, then
 install requirements:
