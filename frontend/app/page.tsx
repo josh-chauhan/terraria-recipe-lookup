@@ -45,6 +45,8 @@ type TreeNode = {
   }>;
 };
 
+// Parse values returned from db to properly formatted text
+
 const TYPE_LABELS: Record<string, string> = {
   accessory: "Accessory",
   ammunition: "Ammunition",
@@ -91,6 +93,9 @@ const TYPE_COMBINATIONS: Record<string, string> = {
   "armor^set": "Armor Set",
   "vanity^set": "Vanity Set",
 };
+
+
+// Map rarity number to color, matches in-game results
 
 const RARITY_LABELS: Record<string, string> = {
   "0": "White",

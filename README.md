@@ -1,76 +1,91 @@
 # Terraria Recipe Lookup
 
-Search any Terraria item and see:
-- its crafting recipe(s) and required station,
-- every other item it's used to craft ("Used In"),
-- a full recursive ingredient tree down to base materials.
-
+Search Terraria items for their crafting recipes, uses, and ingredient trees.
 Data comes from the [Official Terraria Wiki](https://terraria.wiki.gg)'s
-structured **Cargo database** (via its public `action=cargoquery` API) —
-this is more reliable than scraping rendered HTML and is how the wiki
-itself generates its recipe tables. Content is CC BY-NC-SA 4.0; this
-project is an unofficial fan tool, not affiliated with Re-Logic.
+structured **Cargo database** through its public `action=cargoquery` API.
+Content is CC BY-NC-SA 4.0; this is an unofficial fan tool, not affiliated
+with Re-Logic.
 
-## 1. Set up locally
+## Run the full app with Docker Compose
+
+Docker Compose starts the Next.js frontend, Flask API, and PostgreSQL database.
+On first start, the API imports the checked-in `terraria.db` SQLite dataset
+into PostgreSQL. PostgreSQL data is stored in a named Docker volume, so it
+survives container rebuilds and `docker compose down`.
+
+```bash
+docker compose up --build
+```
+
+Open http://localhost:3000. The API is available at http://localhost:5000.
+Use `docker compose up --build -d` to run in the background, and
+`docker compose logs -f` to follow the logs.
+
+The default PostgreSQL password is intended for local development only. Before
+deploying, create a `.env` file based on `.env.example` and set a strong,
+unique `POSTGRES_PASSWORD`. Keep `.env` private; it is git-ignored.
+
+Stop the stack without deleting the database:
+
+```bash
+docker compose down
+```
+
+`docker compose down -v` also deletes the PostgreSQL volume and its data. Use
+that only when you explicitly want to reset the database.
+
+### Refresh the PostgreSQL dataset
+
+After updating `terraria.db` with `scraper.py`, rebuild the API image and
+explicitly replace the PostgreSQL data:
+
+```bash
+docker compose build api
+docker compose run --rm api python migrate_sqlite_to_postgres.py --replace
+docker compose up -d api
+```
+
+The `--replace` option deletes the current item, recipe, and ingredient rows
+before importing the updated SQLite dataset.
+
+### Deploy the Compose stack
+
+Deploy the repository to a Docker host that supports Docker Compose, set
+`POSTGRES_PASSWORD` securely in the host environment or its private `.env`
+file, and run `docker compose up --build -d`. Keep the named `postgres_data`
+volume persistent and back it up. The app stays available while the remote
+host is running; turning off your laptop does not stop a remote host.
+
+## Run only the Flask API without Docker
+
+For the local SQLite setup, create and activate a Python environment, then
+install requirements:
 
 ```bash
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+python app.py
 ```
 
-## 2. Build the database (one-time scrape)
+Visit http://localhost:5000. If `DATABASE_URL` or `PGHOST` is configured, the
+Flask API uses PostgreSQL instead of the local SQLite file.
 
-This downloads all item and recipe data from the wiki into `terraria.db`.
-It makes a few thousand small paginated API calls, so it takes a few
-minutes — that's normal, and it's polite-rate-limited so it won't hammer
-the wiki.
+## Refresh the source dataset
+
+Run the scraper to update `terraria.db` from the wiki:
 
 ```bash
 python scraper.py
 ```
 
-Re-run this any time you want to refresh the data (e.g. after a Terraria
-update changes recipes).
-
-## 3. Run the app
-
-```bash
-python app.py
-```
-
-Visit http://localhost:5000 and start searching.
-
-## 4. Deploy (Render)
-
-1. Push this folder to a GitHub repo — **including the `terraria.db` file**
-   you generated in step 2 (it's a static, read-only dataset, so it's fine
-   to commit; typically a few MB).
-2. On [Render](https://render.com), create a new **Web Service** from that repo.
-3. Build command: `pip install -r requirements.txt`
-4. Start command: `gunicorn app:app`
-5. Deploy. Render will run the Procfile/start command automatically.
-
-Because the database is only ever read at runtime (never written to), this
-works fine even on platforms with ephemeral/read-only filesystems. If you
-later want the data to stay current automatically, you could add a
-scheduled job that re-runs `scraper.py` and re-deploys periodically.
-
-### Alternative: Vercel
-Vercel can also run this as a Python serverless function since the app
-never writes to `terraria.db` at runtime — just make sure the `.db` file
-is included in the deployment and add a `vercel.json` routing all requests
-to `app.py`. Render is generally simpler for a small persistent Flask app
-like this one.
+Then follow the PostgreSQL refresh steps above to import the updated data.
 
 ## Notes on the data
 
-- Item/ingredient images are loaded directly from the wiki via
-  `Special:FilePath/<Item_Name>.png`, which redirects to the real hosted
-  image. A handful of items with unusual names may not resolve to an
-  image — the UI just hides a broken image icon in that case.
-- Some items have multiple valid recipes (e.g. an item craftable with
-  either of two different bars) — these show up as separate recipe cards.
-- The ingredient tree caps depth (default 5, adjustable via `?depth=`
-  on `/api/tree/<name>`) and total node count, since a few very
-  late-game items (e.g. Zenith) have enormous full trees.
+- Item/ingredient images load through the app's image proxy from the wiki's
+  `Special:FilePath/<Item_Name>.png` endpoint. Some unusual names may not have
+  an image; the UI hides a broken image in that case.
+- Items can have multiple valid recipes, which appear as separate recipe cards.
+- The ingredient tree limits depth (default 5, adjustable through `?depth=`
+  on `/api/tree/<name>`) and total nodes to keep large trees manageable.

@@ -14,15 +14,24 @@ import requests
 from flask import Flask, Response, jsonify, request, send_from_directory
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "terraria.db")
-WIKI_FILE_PATH = "https://terraria.wiki.gg/wiki/Special:FilePath/"
+WIKI_FILE_PATH = "https://terraria.wiki.gg/wiki/Special:FilePath/" # Renowned wiki for the game, common grounds for info of the game on the web
 WIKI_IMAGE_HEADERS = {
-    "User-Agent": "TerrariaRecipeLookup/1.0 (personal/educational project)"
+    "User-Agent": "TerrariaRecipeLookup/1.0 (personal/educational project)" # Passes requester as personal project use to the Wiki
 }
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 
 
 def get_db():
+    if os.environ.get("DATABASE_URL") or os.environ.get("PGHOST"):
+        import psycopg
+        from psycopg.rows import dict_row
+
+        database_url = os.environ.get("DATABASE_URL")
+        if database_url:
+            return psycopg.connect(database_url, row_factory=dict_row)
+        return psycopg.connect(row_factory=dict_row)
+
     if not os.path.exists(DB_PATH):
         raise RuntimeError(
             "terraria.db not found. Run `python scraper.py` first to build the database."
@@ -30,6 +39,13 @@ def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def execute_query(conn, query, parameters=()):
+    """Execute a query using placeholders supported by the active database."""
+    if not isinstance(conn, sqlite3.Connection):
+        query = query.replace("?", "%s")
+    return conn.execute(query, parameters)
 
 
 def image_url(item_name):
@@ -65,13 +81,15 @@ def format_coins(copper):
 
 def fetch_recipes_for(conn, name):
     """All recipe rows that craft `name`, each with its ingredient list."""
-    recipe_rows = conn.execute(
+    recipe_rows = execute_query(
+        conn,
         "SELECT id, result_amount, station FROM recipes WHERE result_name = ?",
         (name,),
     ).fetchall()
     recipes = []
     for r in recipe_rows:
-        ing_rows = conn.execute(
+        ing_rows = execute_query(
+            conn,
             "SELECT ingredient_name, amount FROM recipe_ingredients WHERE recipe_id = ?",
             (r["id"],),
         ).fetchall()
@@ -93,7 +111,8 @@ def fetch_recipes_for(conn, name):
 
 
 def fetch_used_in(conn, name):
-    rows = conn.execute(
+    rows = execute_query(
+        conn,
         "SELECT DISTINCT r.result_name, r.result_amount, r.station "
         "FROM recipes r JOIN recipe_ingredients ri ON ri.recipe_id = r.id "
         "WHERE ri.ingredient_name = ? ORDER BY r.result_name",
@@ -163,9 +182,10 @@ def search():
         return jsonify([])
 
     conn = get_db()
-    rows = conn.execute(
-        "SELECT name, type FROM items WHERE name LIKE ? "
-        "ORDER BY CASE WHEN name LIKE ? THEN 0 ELSE 1 END, LENGTH(name) "
+    rows = execute_query(
+        conn,
+        "SELECT name, type FROM items WHERE LOWER(name) LIKE LOWER(?) "
+        "ORDER BY CASE WHEN LOWER(name) LIKE LOWER(?) THEN 0 ELSE 1 END, LENGTH(name) "
         "LIMIT ?",
         (f"%{q}%", f"{q}%", limit),
     ).fetchall()
@@ -179,7 +199,7 @@ def search():
 @app.route("/api/item/<path:name>")
 def item_detail(name):
     conn = get_db()
-    item = conn.execute("SELECT * FROM items WHERE name = ?", (name,)).fetchone()
+    item = execute_query(conn, "SELECT * FROM items WHERE name = ?", (name,)).fetchone()
 
     recipes = fetch_recipes_for(conn, name)
     if not item and not recipes:
