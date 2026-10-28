@@ -171,6 +171,16 @@ def index():
     return app.send_static_file("index.html")
 
 
+@app.route("/api/health")
+def health():
+    conn = get_db()
+    try:
+        execute_query(conn, "SELECT 1").fetchone()
+    finally:
+        conn.close()
+    return jsonify({"status": "ok"}), 200, {"Cache-Control": "no-store"}
+
+
 @app.route("/api/search")
 def search():
     q = request.args.get("q", "").strip()

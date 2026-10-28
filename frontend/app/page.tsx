@@ -189,8 +189,48 @@ export default function Home() {
   const [tree, setTree] = useState<TreeNode | null>(null);
   const [loadingItem, setLoadingItem] = useState(false);
   const [loadingTree, setLoadingTree] = useState(false);
+  const [healthStatus, setHealthStatus] = useState<"checking" | "ready" | "error">("checking");
+  const [showWakeBanner, setShowWakeBanner] = useState(false);
+  const [healthCheckAttempt, setHealthCheckAttempt] = useState(0);
   const suppressSearchRef = useRef(false);
   const searchAbortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const bannerTimer = window.setTimeout(() => setShowWakeBanner(true), 1500);
+
+    const checkHealth = async () => {
+      setHealthStatus("checking");
+      try {
+        const response = await fetch("/api/health", { signal: controller.signal });
+        if (!response.ok) {
+          throw new Error(`Health check failed with status ${response.status}`);
+        }
+        if (active) {
+          setHealthStatus("ready");
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        console.error("Health check failed", error);
+        if (active) {
+          setShowWakeBanner(true);
+          setHealthStatus("error");
+        }
+      } finally {
+        window.clearTimeout(bannerTimer);
+      }
+    };
+
+    void checkHealth();
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearTimeout(bannerTimer);
+    };
+  }, [healthCheckAttempt]);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -347,6 +387,32 @@ export default function Home() {
         </aside>
 
         <div className="page-content">
+          {(showWakeBanner || healthStatus === "error") && healthStatus !== "ready" && (
+            <div
+              className={`wake-banner${healthStatus === "error" ? " wake-banner-error" : ""}`}
+              role="status"
+              aria-live="polite"
+            >
+              {healthStatus === "checking" ? (
+                <>
+                  <span className="wake-spinner" aria-hidden="true" />
+                  <span>Starting the server and checking the database…</span>
+                </>
+              ) : (
+                <>
+                  <span>Couldn&apos;t reach the server. Please try again.</span>
+                  <button
+                    className="wake-retry"
+                    type="button"
+                    onClick={() => setHealthCheckAttempt((attempt) => attempt + 1)}
+                  >
+                    Retry
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
           <div className="search-wrap">
             <input
               id="search-input"
