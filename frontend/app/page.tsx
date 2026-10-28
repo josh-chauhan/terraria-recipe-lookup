@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type SearchItem = {
   name: string;
@@ -194,6 +194,12 @@ export default function Home() {
   const [healthCheckAttempt, setHealthCheckAttempt] = useState(0);
   const suppressSearchRef = useRef(false);
   const searchAbortControllerRef = useRef<AbortController | null>(null);
+  const serverRespondedRef = useRef(false);
+  const markServerReady = useCallback(() => {
+    serverRespondedRef.current = true;
+    setHealthStatus("ready");
+    setShowWakeBanner(false);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -201,21 +207,23 @@ export default function Home() {
     const bannerTimer = window.setTimeout(() => setShowWakeBanner(true), 1500);
 
     const checkHealth = async () => {
-      setHealthStatus("checking");
+      if (!serverRespondedRef.current) {
+        setHealthStatus("checking");
+      }
       try {
         const response = await fetch("/api/health", { signal: controller.signal });
         if (!response.ok) {
           throw new Error(`Health check failed with status ${response.status}`);
         }
         if (active) {
-          setHealthStatus("ready");
+          markServerReady();
         }
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
         console.error("Health check failed", error);
-        if (active) {
+        if (active && !serverRespondedRef.current) {
           setShowWakeBanner(true);
           setHealthStatus("error");
         }
@@ -230,7 +238,7 @@ export default function Home() {
       controller.abort();
       window.clearTimeout(bannerTimer);
     };
-  }, [healthCheckAttempt]);
+  }, [healthCheckAttempt, markServerReady]);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -252,8 +260,12 @@ export default function Home() {
         const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, {
           signal: controller.signal,
         });
+        if (!res.ok) {
+          throw new Error(`Search failed with status ${res.status}`);
+        }
         const items = (await res.json()) as SearchItem[];
         if (!controller.signal.aborted) {
+          markServerReady();
           setResults(items);
         }
       } catch (error) {
@@ -269,7 +281,7 @@ export default function Home() {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [query]);
+  }, [query, markServerReady]);
 
   const selectSearchItem = (name: string) => {
     suppressSearchRef.current = true;
@@ -287,6 +299,7 @@ export default function Home() {
         return;
       }
       const item = (await res.json()) as ItemDetail;
+      markServerReady();
       setSelectedItem(item);
       await loadTree(name);
     } catch (error) {
@@ -301,7 +314,11 @@ export default function Home() {
     setLoadingTree(true);
     try {
       const res = await fetch(`/api/tree/${encodeURIComponent(name)}`);
+      if (!res.ok) {
+        throw new Error(`Ingredient tree request failed with status ${res.status}`);
+      }
       const nextTree = (await res.json()) as TreeNode;
+      markServerReady();
       setTree(nextTree);
     } catch (error) {
       console.error(error);
